@@ -12,11 +12,11 @@ git clone https://github.com/jibuene/speeditor.git
 ```
 Create a build directory:
 ```
-mkdir build && cd build
+cd speeditor && mkdir build && cd build
 ```
 Run Make:
 ```
-make
+make ..
 ```
 Run the program
 ```
