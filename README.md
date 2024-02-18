@@ -14,9 +14,9 @@ Create a build directory:
 ```
 cd speeditor && mkdir build && cd build
 ```
-Run Make:
+Run cmake:
 ```
-make ..
+cmake ..
 ```
 Run the program
 ```
