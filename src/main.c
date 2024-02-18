@@ -40,7 +40,7 @@ void deleteText(char *text, int textLength, int codepointSize) {
 void moveCursorHorizontal(char *text, int textLength, int codepointSize) {
   // Move cursor position with keys
   if (IsKeyPressed(KEY_LEFT) ||
-      (IsKeyDown(KEY_LEFT) &&
+      (IsKeyDown(KEY_LEFT) && cursorX > 0 &&
        (autoCursorCooldownCounter > RAYGUI_TEXTBOX_AUTO_CURSOR_COOLDOWN))) {
     autoCursorDelayCounter++;
 
@@ -64,13 +64,24 @@ void moveCursorHorizontal(char *text, int textLength, int codepointSize) {
   }
 }
 
+int textwidth(char *text, int start, int end) {
+  int width = 0;
+  for (int i = start; i < end; i++) {
+    char c = text[i];
+    width += GetTextWidth(&c);
+  }
+  return width;
+}
+
 void moveCursorVertical(Rectangle cursor, char *text) {
   int nextNewLine = 0;
   int prevNewLine = 0;
   int textLength = (int)strlen(text);
 
+  int textWidth = 0;
   for (int i = textBoxCursorIndex; i < textLength; i++) {
     if (text[i] == '\n') {
+      textWidth += GetTextWidth(&text[i]);
       nextNewLine = i;
       break;
     }
@@ -87,15 +98,18 @@ void moveCursorVertical(Rectangle cursor, char *text) {
     if (prevNewLine == 0) {
       return;
     }
-    cursorY -= 22;
+    cursorY -= GuiGetStyle(DEFAULT, TEXT_SIZE);
+    textBoxCursorIndex = prevNewLine + (textBoxCursorIndex - nextNewLine);
+    cursorX = textwidth(text, prevNewLine, textBoxCursorIndex);
   } else if (IsKeyPressed(KEY_DOWN)) {
     if (nextNewLine == 0) {
       return;
     }
     textBoxCursorIndex = nextNewLine + (textBoxCursorIndex - prevNewLine);
-    // printf("Cursor Y: %f\n", cursor.y);
-    // printf("textBoxCursorIndex Y: %d\n", textBoxCursorIndex);
-    cursorY += 22;
+    cursorX = textWidth;
+    printf("Cursor Y: %d\n", cursorY);
+    printf("Cursof X: %d\n", cursorX);
+    cursorY += GuiGetStyle(DEFAULT, TEXT_SIZE);
   }
 }
 
@@ -160,14 +174,14 @@ int JIBGuiTextBox(Rectangle bounds, char *text, int bufferSize) {
 
     textBoxCursorIndex += codepointSize;
     textLength += codepointSize;
-    cursorX += GuiGetStyle(DEFAULT, TEXT_SIZE) * 0.8;
+    cursorX += GetTextWidth(charEncoded);
 
     // Make sure text last character is EOL
     text[textLength] = '\0';
   }
 
-  moveCursorHorizontal(text, textLength, codepointSize);
   moveCursorVertical(cursor, text);
+  moveCursorHorizontal(text, textLength, codepointSize);
   deleteText(text, textLength, codepointSize);
   //--------------------------------------------------------------------
 
@@ -202,18 +216,12 @@ int main() {
   bool dragWindow = false;
 
   GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
+  GuiSetStyle(DEFAULT, TEXT_SPACING, 2);
 
-  char myText[1024] =
-      "Lorem ipsum dolor sit amet"
-      "tempor incididunt ut labor"
-      "veniam, quis nostrud exerc"
-      "commodo consequat.\nDuis"
-      "voluptate velit esse cillu"
-      "pariatur."
-      "\nThisisastringlongerthanexpectedwithoutspacestotestcharbreaksforthose"
-      "cases,checkingifworkingasexpected.\nExcepteur sint occaecat cupidatat "
-      "non proident, sunt in culp"
-      "laborum.";
+  char myText[1024] = "LLLLLLLLLLLLLLLLLLLLLLLLL\nLLLLL"
+                      "LLLLLLLLLLLLLLLLLLLLLLLLLLLLLL"
+                      "LLLLLLLLLLLLLLLLLLLLLLLLLL\nLLLL"
+                      "laborum.";
   SetWindowPosition(windowPosition.x, windowPosition.y);
 
   bool exitWindow = false;
